@@ -1,6 +1,7 @@
 mod config;
 mod graph;
 mod input;
+mod mcp;
 mod metrics;
 mod platform;
 mod process;
@@ -33,6 +34,8 @@ enum Command {
     Daemon,
     /// Print current system metrics as JSON to stdout.
     Snapshot,
+    /// Run as MCP server (stdio transport) for Claude Code integration.
+    Mcp,
 }
 
 fn main() {
@@ -48,6 +51,11 @@ fn main() {
     let config = load_config();
 
     match cli.command {
+        Some(Command::Mcp) => {
+            let rt = tokio::runtime::Runtime::new().expect("failed to create tokio runtime");
+            rt.block_on(mcp::run())
+                .expect("MCP server error");
+        }
         Some(Command::Daemon) => run_daemon(&config),
         Some(Command::Snapshot) => run_snapshot(&config),
         None => run_gui(config),
