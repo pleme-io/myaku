@@ -6,6 +6,20 @@
 #[cfg(target_os = "macos")]
 pub mod macos;
 
+/// CPU usage information.
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+pub struct CpuInfo {
+    /// Per-core usage percentages (0.0 - 100.0).
+    pub per_core: Vec<f32>,
+    /// Total (average) CPU usage percentage.
+    pub total: f32,
+    /// CPU brand name.
+    pub brand: String,
+    /// Number of physical cores.
+    pub core_count: usize,
+}
+
 /// Memory usage information.
 #[derive(Debug, Clone)]
 pub struct MemoryInfo {
@@ -15,13 +29,21 @@ pub struct MemoryInfo {
     pub used: u64,
     /// Available memory in bytes.
     pub available: u64,
+    /// Total swap in bytes.
+    pub swap_total: u64,
+    /// Used swap in bytes.
+    pub swap_used: u64,
 }
 
 /// Disk usage information.
 #[derive(Debug, Clone)]
 pub struct DiskInfo {
+    /// Disk name / device identifier.
+    pub name: String,
     /// Mount point.
     pub mount_point: String,
+    /// File system type (e.g. "apfs", "ext4").
+    pub fs_type: String,
     /// Total space in bytes.
     pub total: u64,
     /// Used space in bytes.
@@ -35,14 +57,15 @@ pub struct DiskInfo {
 pub struct NetworkInfo {
     /// Interface name.
     pub interface: String,
-    /// Bytes received.
+    /// Total bytes received (cumulative).
     pub rx_bytes: u64,
-    /// Bytes transmitted.
+    /// Total bytes transmitted (cumulative).
     pub tx_bytes: u64,
 }
 
 /// Information about a running process.
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct ProcessInfo {
     /// Process ID.
     pub pid: u32,
@@ -54,24 +77,37 @@ pub struct ProcessInfo {
     pub memory: u64,
     /// Process status (running, sleeping, etc.).
     pub status: String,
+    /// Parent process ID (0 if unknown).
+    pub parent_pid: u32,
+    /// User who owns the process.
+    pub user: String,
 }
 
 /// System metrics collection.
 pub trait SystemMetrics: Send + Sync {
-    /// Get per-core CPU usage percentages.
-    fn cpu_usage(&self) -> Result<Vec<f32>, Box<dyn std::error::Error>>;
+    /// Refresh all metrics. Must be called periodically to get updated values.
+    fn refresh(&mut self);
+
+    /// Get CPU usage info (per-core and total).
+    fn cpu_info(&self) -> CpuInfo;
 
     /// Get memory usage information.
-    fn memory_usage(&self) -> Result<MemoryInfo, Box<dyn std::error::Error>>;
+    fn memory_info(&self) -> MemoryInfo;
 
     /// Get disk usage for all mounted volumes.
-    fn disk_usage(&self) -> Result<Vec<DiskInfo>, Box<dyn std::error::Error>>;
+    fn disk_info(&self) -> Vec<DiskInfo>;
 
     /// Get network interface statistics.
-    fn network_usage(&self) -> Result<Vec<NetworkInfo>, Box<dyn std::error::Error>>;
+    fn network_info(&self) -> Vec<NetworkInfo>;
 
     /// Get list of running processes.
-    fn process_list(&self) -> Result<Vec<ProcessInfo>, Box<dyn std::error::Error>>;
+    fn process_list(&self) -> Vec<ProcessInfo>;
+
+    /// Get system uptime in seconds.
+    fn uptime_secs(&self) -> u64;
+
+    /// Get load averages (1, 5, 15 minute).
+    fn load_average(&self) -> [f64; 3];
 }
 
 /// Create a platform-specific system metrics implementation.

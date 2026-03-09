@@ -44,8 +44,8 @@ pub struct AppearanceConfig {
 impl Default for AppearanceConfig {
     fn default() -> Self {
         Self {
-            width: 800,
-            height: 600,
+            width: 1200,
+            height: 800,
             font_size: 13.0,
             opacity: 0.95,
             refresh_rate_ms: 1000,
@@ -67,6 +67,8 @@ pub struct MonitoringConfig {
     pub show_network: bool,
     /// Show GPU usage (macOS only).
     pub show_gpu: bool,
+    /// How many seconds of history to keep in graphs.
+    pub history_seconds: u32,
 }
 
 impl Default for MonitoringConfig {
@@ -77,6 +79,7 @@ impl Default for MonitoringConfig {
             show_disk: true,
             show_network: true,
             show_gpu: false,
+            history_seconds: 300,
         }
     }
 }
@@ -87,6 +90,8 @@ impl Default for MonitoringConfig {
 pub struct ProcessConfig {
     /// Sort column (cpu, memory, pid, name).
     pub sort_by: String,
+    /// Sort direction (asc, desc).
+    pub sort_direction: String,
     /// Show per-process threads.
     pub show_threads: bool,
     /// Auto-refresh the process list.
@@ -97,6 +102,7 @@ impl Default for ProcessConfig {
     fn default() -> Self {
         Self {
             sort_by: "cpu".into(),
+            sort_direction: "desc".into(),
             show_threads: false,
             auto_refresh: true,
         }
@@ -154,10 +160,11 @@ mod tests {
     #[test]
     fn default_config_is_valid() {
         let config = MyakuConfig::default();
-        assert_eq!(config.appearance.width, 800);
+        assert_eq!(config.appearance.width, 1200);
         assert_eq!(config.appearance.refresh_rate_ms, 1000);
         assert!(config.monitoring.show_cpu);
         assert!(!config.daemon.enable);
+        assert_eq!(config.monitoring.history_seconds, 300);
     }
 
     #[test]
@@ -167,5 +174,13 @@ mod tests {
         assert!(config.alerts.cpu_threshold <= 100.0);
         assert!(config.alerts.memory_threshold > 0.0);
         assert!(config.alerts.memory_threshold <= 100.0);
+    }
+
+    #[test]
+    fn process_config_defaults() {
+        let config = MyakuConfig::default();
+        assert_eq!(config.processes.sort_by, "cpu");
+        assert_eq!(config.processes.sort_direction, "desc");
+        assert!(config.processes.auto_refresh);
     }
 }

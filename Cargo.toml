@@ -19,16 +19,49 @@ missing_panics_doc = "allow"
 [profile.release]
 codegen-units = 1
 lto = true
+opt-level = "z"
+strip = true
 
 [dependencies]
-shikumi = { git = "https://github.com/pleme-io/shikumi" }
-serde = { version = "1.0", features = ["derive"] }
+# Pleme-io shared libraries
+garasu = { path = "../garasu" }
+madori = { path = "../madori" }
+egaku = { path = "../egaku" }
+shikumi = { path = "../shikumi" }
+
+# GPU rendering (direct wgpu types needed in render code)
+wgpu = "25"
+
+# Text rendering
+glyphon = "0.9"
+
+# System metrics
+sysinfo = "0.33"
+
+# CLI and config
 clap = { version = "4", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# GPU data upload
+bytemuck = { version = "1", features = ["derive"] }
+
+# Async runtime (for daemon mode)
 tokio = { version = "1", features = ["full"] }
+
+# Config hot-reload
 arc-swap = "1.8"
-sysinfo = "0.33"
 
 [dev-dependencies]
 tempfile = "3"
+
+# Unify path deps with git deps used by madori/garasu
+[patch."https://github.com/pleme-io/garasu"]
+garasu = { path = "../garasu" }
+
+[patch."https://github.com/pleme-io/shikumi"]
+shikumi = { path = "../shikumi" }
+
+[patch."https://github.com/pleme-io/egaku"]
+egaku = { path = "../egaku" }
