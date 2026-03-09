@@ -28,6 +28,8 @@ garasu = { path = "../garasu" }
 madori = { path = "../madori" }
 egaku = { path = "../egaku" }
 shikumi = { path = "../shikumi" }
+soushi = { path = "../soushi" }
+awase = { path = "../awase" }
 kaname = { path = "../kaname" }
 rmcp = { version = "0.15", features = ["server", "transport-io"] }
 schemars = "0.8"
@@ -57,6 +59,9 @@ tokio = { version = "1", features = ["full"] }
 # Config hot-reload
 arc-swap = "1.8"
 
+# Directory paths
+dirs = "6.0"
+
 [dev-dependencies]
 tempfile = "3"
 
@@ -72,3 +77,9 @@ egaku = { path = "../egaku" }
 
 [patch."https://github.com/pleme-io/kaname"]
 kaname = { path = "../kaname" }
+
+[patch."https://github.com/pleme-io/soushi"]
+soushi = { path = "../soushi" }
+
+[patch."https://github.com/pleme-io/awase"]
+awase = { path = "../awase" }

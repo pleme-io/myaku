@@ -6,3 +6,4 @@ pub mod metrics;
 pub mod platform;
 pub mod process;
 pub mod render;
+pub mod scripting;

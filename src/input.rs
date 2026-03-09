@@ -1,6 +1,7 @@
 //! Keyboard input handling with vim-style navigation.
 //!
 //! Supports multiple modes: Dashboard, Process, and Filter.
+//! Uses `awase::Hotkey` for key binding definitions.
 
 use madori::event::{KeyCode, KeyEvent};
 
@@ -60,6 +61,71 @@ pub enum Action {
     None,
 }
 
+/// Convert a madori `KeyCode` to an `awase::Key`.
+fn to_awase_key(key: &KeyCode) -> Option<awase::Key> {
+    match key {
+        KeyCode::Char(c) => match c.to_ascii_lowercase() {
+            'a' => Some(awase::Key::A),
+            'b' => Some(awase::Key::B),
+            'c' => Some(awase::Key::C),
+            'd' => Some(awase::Key::D),
+            'e' => Some(awase::Key::E),
+            'f' => Some(awase::Key::F),
+            'g' => Some(awase::Key::G),
+            'h' => Some(awase::Key::H),
+            'i' => Some(awase::Key::I),
+            'j' => Some(awase::Key::J),
+            'k' => Some(awase::Key::K),
+            'l' => Some(awase::Key::L),
+            'm' => Some(awase::Key::M),
+            'n' => Some(awase::Key::N),
+            'o' => Some(awase::Key::O),
+            'p' => Some(awase::Key::P),
+            'q' => Some(awase::Key::Q),
+            'r' => Some(awase::Key::R),
+            's' => Some(awase::Key::S),
+            't' => Some(awase::Key::T),
+            'u' => Some(awase::Key::U),
+            'v' => Some(awase::Key::V),
+            'w' => Some(awase::Key::W),
+            'x' => Some(awase::Key::X),
+            'y' => Some(awase::Key::Y),
+            'z' => Some(awase::Key::Z),
+            '/' => Some(awase::Key::Slash),
+            _ => Option::None,
+        },
+        KeyCode::Escape => Some(awase::Key::Escape),
+        KeyCode::Enter => Some(awase::Key::Return),
+        KeyCode::Tab => Some(awase::Key::Tab),
+        KeyCode::Backspace => Some(awase::Key::Backspace),
+        KeyCode::Up => Some(awase::Key::Up),
+        KeyCode::Down => Some(awase::Key::Down),
+        KeyCode::Left => Some(awase::Key::Left),
+        KeyCode::Right => Some(awase::Key::Right),
+        KeyCode::PageUp => Some(awase::Key::PageUp),
+        KeyCode::PageDown => Some(awase::Key::PageDown),
+        _ => Option::None,
+    }
+}
+
+/// Convert madori modifiers to awase modifiers.
+fn to_awase_modifiers(mods: &madori::event::Modifiers) -> awase::Modifiers {
+    let mut result = awase::Modifiers::NONE;
+    if mods.ctrl {
+        result = result | awase::Modifiers::CTRL;
+    }
+    if mods.alt {
+        result = result | awase::Modifiers::ALT;
+    }
+    if mods.shift {
+        result = result | awase::Modifiers::SHIFT;
+    }
+    if mods.meta {
+        result = result | awase::Modifiers::CMD;
+    }
+    result
+}
+
 /// Map a key event to an action based on current mode.
 #[must_use]
 pub fn map_key(event: &KeyEvent, mode: Mode) -> Action {
@@ -75,25 +141,51 @@ pub fn map_key(event: &KeyEvent, mode: Mode) -> Action {
 }
 
 fn map_dashboard_key(event: &KeyEvent) -> Action {
+    // Build awase hotkey for key matching
+    if let Some(awase_key) = to_awase_key(&event.key) {
+        let awase_mods = to_awase_modifiers(&event.modifiers);
+        let hotkey = awase::Hotkey::new(awase_mods, awase_key);
+
+        // Use awase hotkey for checking key + modifier combinations
+        if hotkey.modifiers.is_empty() {
+            match hotkey.key {
+                awase::Key::Q => return Action::Quit,
+                awase::Key::P => return Action::SwitchProcess,
+                awase::Key::R => return Action::ForceRefresh,
+                awase::Key::Escape => return Action::Quit,
+                _ => {}
+            }
+        }
+    }
+
     match event.key {
-        KeyCode::Char('q') if !event.modifiers.any() => Action::Quit,
-        KeyCode::Char('p') if !event.modifiers.any() => Action::SwitchProcess,
-        KeyCode::Char('r') if !event.modifiers.any() => Action::ForceRefresh,
         KeyCode::Tab if !event.modifiers.shift => Action::FocusNext,
         KeyCode::Tab if event.modifiers.shift => Action::FocusPrev,
         KeyCode::Char('j') | KeyCode::Down => Action::Down,
         KeyCode::Char('k') | KeyCode::Up => Action::Up,
         KeyCode::Char('h') | KeyCode::Left => Action::FocusPrev,
         KeyCode::Char('l') | KeyCode::Right => Action::FocusNext,
-        KeyCode::Escape => Action::Quit,
         _ => Action::None,
     }
 }
 
 fn map_process_key(event: &KeyEvent) -> Action {
+    // Build awase hotkey for key matching
+    if let Some(awase_key) = to_awase_key(&event.key) {
+        let awase_mods = to_awase_modifiers(&event.modifiers);
+        let hotkey = awase::Hotkey::new(awase_mods, awase_key);
+
+        if hotkey.modifiers.is_empty() {
+            match hotkey.key {
+                awase::Key::Q => return Action::Quit,
+                awase::Key::Escape => return Action::Back,
+                awase::Key::Slash => return Action::EnterFilter,
+                _ => {}
+            }
+        }
+    }
+
     match event.key {
-        KeyCode::Char('q') if !event.modifiers.any() => Action::Quit,
-        KeyCode::Escape => Action::Back,
         KeyCode::Char('j') | KeyCode::Down => Action::Down,
         KeyCode::Char('k') | KeyCode::Up => Action::Up,
         KeyCode::Char('g') if !event.modifiers.shift => Action::First,
@@ -104,7 +196,6 @@ fn map_process_key(event: &KeyEvent) -> Action {
         KeyCode::Char('S') | KeyCode::Char('s') if event.modifiers.shift => {
             Action::ToggleSortDirection
         }
-        KeyCode::Char('/') => Action::EnterFilter,
         KeyCode::Char('r') if !event.modifiers.any() => Action::ForceRefresh,
         KeyCode::Char('d') if !event.modifiers.any() => Action::SwitchDashboard,
         KeyCode::Tab => Action::FocusNext,
@@ -217,5 +308,25 @@ mod tests {
         let mut k = key(KeyCode::Char('q'));
         k.pressed = false;
         assert_eq!(map_key(&k, Mode::Dashboard), Action::None);
+    }
+
+    #[test]
+    fn awase_key_conversion() {
+        assert_eq!(to_awase_key(&KeyCode::Char('a')), Some(awase::Key::A));
+        assert_eq!(to_awase_key(&KeyCode::Escape), Some(awase::Key::Escape));
+        assert_eq!(to_awase_key(&KeyCode::Enter), Some(awase::Key::Return));
+    }
+
+    #[test]
+    fn awase_modifier_conversion() {
+        let mods = Modifiers {
+            ctrl: true,
+            shift: true,
+            ..Default::default()
+        };
+        let awase_mods = to_awase_modifiers(&mods);
+        assert!(awase_mods.contains(awase::Modifiers::CTRL));
+        assert!(awase_mods.contains(awase::Modifiers::SHIFT));
+        assert!(!awase_mods.contains(awase::Modifiers::CMD));
     }
 }
