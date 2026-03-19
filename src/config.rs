@@ -1,4 +1,4 @@
-//! Myaku configuration — uses shikumi for discovery and hot-reload.
+//! Myaku configuration — loaded via shidou (which uses shikumi internally).
 
 use serde::{Deserialize, Serialize};
 

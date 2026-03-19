@@ -13,8 +13,6 @@ use clap::{Parser, Subcommand};
 use egaku::Theme;
 use madori::event::AppEvent;
 use madori::{App, AppConfig, EventResponse};
-use tracing_subscriber::EnvFilter;
-
 use crate::config::MyakuConfig;
 use crate::input::{Action, Mode};
 use crate::metrics::MetricsCollector;
@@ -39,49 +37,19 @@ enum Command {
 }
 
 fn main() {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
-        )
-        .init();
-
+    shidou::init_tracing();
     let cli = Cli::parse();
-
-    // Load config via shikumi
-    let config = load_config();
+    let config: MyakuConfig = shidou::load_config("myaku");
 
     match cli.command {
         Some(Command::Mcp) => {
-            let rt = tokio::runtime::Runtime::new().expect("failed to create tokio runtime");
-            rt.block_on(mcp::run())
+            shidou::block_on(mcp::run())
+                .expect("failed to create tokio runtime")
                 .expect("MCP server error");
         }
         Some(Command::Daemon) => run_daemon(&config),
         Some(Command::Snapshot) => run_snapshot(&config),
         None => run_gui(config),
-    }
-}
-
-fn load_config() -> MyakuConfig {
-    match shikumi::ConfigDiscovery::new("myaku")
-        .env_override("MYAKU_CONFIG")
-        .discover()
-    {
-        Ok(path) => {
-            tracing::info!("loading config from {}", path.display());
-            let store =
-                shikumi::ConfigStore::<MyakuConfig>::load(&path, "MYAKU_").unwrap_or_else(|e| {
-                    tracing::warn!("failed to load config: {e}, using defaults");
-                    let tmp = std::env::temp_dir().join("myaku-default.yaml");
-                    std::fs::write(&tmp, "{}").ok();
-                    shikumi::ConfigStore::load(&tmp, "MYAKU_").unwrap()
-                });
-            MyakuConfig::clone(&store.get())
-        }
-        Err(_) => {
-            tracing::info!("no config file found, using defaults");
-            MyakuConfig::default()
-        }
     }
 }
 
@@ -136,6 +104,8 @@ fn run_gui(config: MyakuConfig) {
                                 consumed: true,
                                 exit: true,
                                 set_title: None,
+                                toggle_fullscreen: false,
+                                set_cursor_visible: None,
                             };
                         }
                         Action::SwitchDashboard => {
@@ -277,7 +247,7 @@ fn run_gui(config: MyakuConfig) {
 
 fn run_daemon(config: &MyakuConfig) {
     tracing::info!("starting myaku daemon");
-    let rt = tokio::runtime::Runtime::new().expect("failed to create tokio runtime");
+    let rt = shidou::create_runtime().expect("failed to create tokio runtime");
     rt.block_on(async {
         tracing::info!(
             "metrics daemon on port {}, retention {}h",

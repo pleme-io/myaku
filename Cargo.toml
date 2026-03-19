@@ -27,7 +27,7 @@ strip = true
 garasu = { path = "../garasu" }
 madori = { path = "../madori" }
 egaku = { path = "../egaku" }
-shikumi = { path = "../shikumi" }
+shidou = { path = "../shidou" }
 soushi = { path = "../soushi" }
 awase = { path = "../awase" }
 kaname = { path = "../kaname" }
@@ -48,16 +48,12 @@ clap = { version = "4", features = ["derive"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # GPU data upload
 bytemuck = { version = "1", features = ["derive"] }
 
 # Async runtime (for daemon mode)
 tokio = { version = "1", features = ["full"] }
-
-# Config hot-reload
-arc-swap = "1.8"
 
 # Directory paths
 dirs = "6.0"
@@ -71,6 +67,9 @@ garasu = { path = "../garasu" }
 
 [patch."https://github.com/pleme-io/shikumi"]
 shikumi = { path = "../shikumi" }
+
+[patch."https://github.com/pleme-io/shidou"]
+shidou = { path = "../shidou" }
 
 [patch."https://github.com/pleme-io/egaku"]
 egaku = { path = "../egaku" }

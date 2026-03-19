@@ -1440,7 +1440,6 @@ dependencies = [
 name = "myaku"
 version = "0.1.0"
 dependencies = [
- "arc-swap",
  "awase",
  "bytemuck",
  "clap",
@@ -1454,13 +1453,12 @@ dependencies = [
  "schemars 0.8.22",
  "serde",
  "serde_json",
- "shikumi",
+ "shidou",
  "soushi",
  "sysinfo",
  "tempfile",
  "tokio",
  "tracing",
- "tracing-subscriber",
  "wgpu",
 ]
 
@@ -2531,6 +2529,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f40ca3c46823713e0d4209592e8d6e826aa57e928f09752619fc696c499637f6"
 dependencies = [
  "lazy_static",
+]
+
+[[package]]
+name = "shidou"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "serde",
+ "shikumi",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
